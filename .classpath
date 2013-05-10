@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/soot"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/soot-infoflow"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/soot-infoflow-android"/>
+	<classpathentry kind="lib" path="lib/weka.jar" sourcepath="C:/Program Files/Weka-3-6/weka-src.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
