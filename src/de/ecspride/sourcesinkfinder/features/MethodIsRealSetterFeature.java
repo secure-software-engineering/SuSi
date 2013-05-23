@@ -22,8 +22,8 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
  */
 public class MethodIsRealSetterFeature extends AbstractSootFeature {
 
-	public MethodIsRealSetterFeature(String mapsJAR, String androidJAR) {
-		super(mapsJAR, androidJAR);
+	public MethodIsRealSetterFeature(String androidJAR) {
+		super(androidJAR);
 	}
 	
 	@Override

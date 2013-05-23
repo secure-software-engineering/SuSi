@@ -15,8 +15,8 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
  */
 public class MethodReturnsConstantFeature extends AbstractSootFeature {
 
-	public MethodReturnsConstantFeature(String mapsJAR, String androidJAR) {
-		super(mapsJAR, androidJAR);
+	public MethodReturnsConstantFeature(String androidJAR) {
+		super(androidJAR);
 	}
 	
 	@Override

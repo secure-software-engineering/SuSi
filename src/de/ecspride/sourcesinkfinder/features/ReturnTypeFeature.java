@@ -13,8 +13,8 @@ public class ReturnTypeFeature extends AbstractSootFeature {
 
 	private final String returnType;
 	
-	public ReturnTypeFeature(String mapsJAR, String androidJAR, String returnType) {
-		super(mapsJAR, androidJAR);
+	public ReturnTypeFeature(String androidJAR, String returnType) {
+		super(androidJAR);
 		this.returnType = returnType;
 	}
 	

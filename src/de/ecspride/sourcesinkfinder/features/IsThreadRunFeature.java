@@ -11,8 +11,8 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
  */
 public class IsThreadRunFeature extends AbstractSootFeature {
 
-	public IsThreadRunFeature(String mapsJAR, String androidJAR) {
-		super(mapsJAR, androidJAR);
+	public IsThreadRunFeature(String androidJAR) {
+		super(androidJAR);
 	}
 	
 	@Override

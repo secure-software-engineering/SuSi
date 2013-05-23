@@ -13,8 +13,8 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
  */
 public class ParameterIsInterfaceFeature extends AbstractSootFeature {
 	
-	public ParameterIsInterfaceFeature(String mapsJAR, String androidJAR) {
-		super(mapsJAR, androidJAR);
+	public ParameterIsInterfaceFeature(String androidJAR) {
+		super(androidJAR);
 	}
 	
 	@Override

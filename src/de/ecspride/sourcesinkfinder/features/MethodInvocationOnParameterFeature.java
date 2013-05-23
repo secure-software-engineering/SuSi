@@ -23,8 +23,8 @@ public class MethodInvocationOnParameterFeature extends AbstractSootFeature {
 	
 	private final String methodName;
 
-	public MethodInvocationOnParameterFeature(String mapsJAR, String androidJAR, String methodName) {
-		super(mapsJAR, androidJAR);
+	public MethodInvocationOnParameterFeature(String androidJAR, String methodName) {
+		super(androidJAR);
 		this.methodName = methodName;
 	}
 	

@@ -23,19 +23,18 @@ public class MethodCallsMethodFeature extends AbstractSootFeature {
 	private final String methodName;
 	private final boolean substringMatch;
 	
-	public MethodCallsMethodFeature(String mapsJAR, String androidJAR,
-			String methodName) {
-		this(mapsJAR, androidJAR, "", methodName);
+	public MethodCallsMethodFeature(String androidJAR, String methodName) {
+		this(androidJAR, "", methodName);
 	}
 
-	public MethodCallsMethodFeature(String mapsJAR, String androidJAR,
-			String className, String methodName) {
-		this(mapsJAR, androidJAR, className, methodName, false);
+	public MethodCallsMethodFeature(String androidJAR, String className,
+			String methodName) {
+		this(androidJAR, className, methodName, false);
 	}
 	
-	public MethodCallsMethodFeature(String mapsJAR, String androidJAR,
-			String className, String methodName, boolean substringMatch) {
-		super(mapsJAR, androidJAR);
+	public MethodCallsMethodFeature(String androidJAR, String className,
+			String methodName, boolean substringMatch) {
+		super(androidJAR);
 		this.className = className;
 		this.methodName = methodName;
 		this.substringMatch = substringMatch;

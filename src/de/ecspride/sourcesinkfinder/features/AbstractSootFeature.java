@@ -1,6 +1,5 @@
 package de.ecspride.sourcesinkfinder.features;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +19,9 @@ public abstract class AbstractSootFeature implements IFeature {
 	private static boolean SOOT_INITIALIZED = false;
 	
 	private Map<AndroidMethod, Type> resultCache = new HashMap<AndroidMethod, Type>();
-	private String mapsJAR;
 	private String androidJAR;
 	
-	public AbstractSootFeature(String mapsJAR, String androidJAR) {
-		this.mapsJAR = mapsJAR;
+	public AbstractSootFeature(String androidJAR) {
 		this.androidJAR = androidJAR;
 		initializeSoot();
 	}
@@ -36,8 +33,7 @@ public abstract class AbstractSootFeature implements IFeature {
 		
 		Options.v().set_allow_phantom_refs(true);
 		Options.v().set_prepend_classpath(false);
-		Options.v().set_soot_classpath(mapsJAR + File.pathSeparator + androidJAR);
-//		Options.v().set_soot_classpath(androidJAR);
+		Options.v().set_soot_classpath(androidJAR);
 		Options.v().set_whole_program(true);
 		Options.v().set_include_all(true);
 		

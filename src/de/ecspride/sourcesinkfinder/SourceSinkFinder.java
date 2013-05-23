@@ -89,7 +89,6 @@ public class SourceSinkFinder {
 	private final Set<IFeature> featuresCategories = initializeFeaturesCategories();
 	
 	private static String ANDROID;
-	private static String MAPS;
 	
 	private static final HashSet<AndroidMethod> methodsWithPermissions = new HashSet<AndroidMethod>();
 			
@@ -110,23 +109,21 @@ public class SourceSinkFinder {
 
 	/**
 	 * @param args  *First parameter: ANDROID platform jar path
-	 * 				*Second parameter: MAPS jar path 		
 	 * 				*Third - x parameter: names of input
 	 * 				*Last parameter: file name of output
 	 */
 	public static void main(String[] args) {
 		try {
-			if (args.length < 4) {
+			if (args.length < 3) {
 				System.out.println("Usage: java de.ecspride.sourcesinkfinder.SourceSinkFinder "
-						+ "<androidJAR> <mapsJAR> <input1>...<inputN> <outputFile>");
+						+ "<androidJAR> <input1>...<inputN> <outputFile>");
 				return;
 			}
 			
-			String[] inputs = Arrays.copyOfRange(args, 2, args.length-1);
+			String[] inputs = Arrays.copyOfRange(args, 1, args.length-1);
 			
 			//set Android paths
 			ANDROID = args[0];
-			MAPS = args[1];
 
 			SourceSinkFinder sourceSinkFinder = new SourceSinkFinder();
 			sourceSinkFinder.run(inputs, args[args.length - 1]);
@@ -793,7 +790,7 @@ public class SourceSinkFinder {
 
 	private void loadMethodsFromAndroid(final Set<AndroidMethod> methods) {
 		int methodCount = methods.size();
-		new AbstractSootFeature(MAPS, ANDROID) {
+		new AbstractSootFeature(ANDROID) {
 			
 			@Override
 			public Type appliesInternal(AndroidMethod method) {
@@ -830,7 +827,7 @@ public class SourceSinkFinder {
 			copyCount = 0;
 			for (AndroidMethod am : methods) {
 				// Check whether one of the parent classes is already annotated
-				AbstractSootFeature asf = new AbstractSootFeature(MAPS, ANDROID) {
+				AbstractSootFeature asf = new AbstractSootFeature(ANDROID) {
 					
 					@Override
 					public Type appliesInternal(AndroidMethod method) {
@@ -913,7 +910,7 @@ public class SourceSinkFinder {
 	private Set<AndroidMethod> PrefilterInterfaces(Set<AndroidMethod> methods) {
 		Set<AndroidMethod> purgedMethods = new HashSet<AndroidMethod>(methods.size());
 		for (AndroidMethod am : methods) {
-			AbstractSootFeature asf = new AbstractSootFeature(MAPS, ANDROID) {
+			AbstractSootFeature asf = new AbstractSootFeature(ANDROID) {
 			
 				@Override
 				public Type appliesInternal(AndroidMethod method) {
@@ -1193,15 +1190,15 @@ public class SourceSinkFinder {
 		IFeature parameterTypeHasString = new ParameterContainsTypeOrNameFeature("java.lang.String");
 		features.add(parameterTypeHasString);
 
-		IFeature voidReturnType = new ReturnTypeFeature(MAPS, ANDROID, "void");
+		IFeature voidReturnType = new ReturnTypeFeature(ANDROID, "void");
 		features.add(voidReturnType);
-		IFeature booleanReturnType = new ReturnTypeFeature(MAPS, ANDROID, "boolean");
+		IFeature booleanReturnType = new ReturnTypeFeature(ANDROID, "boolean");
 		features.add(booleanReturnType);
-		IFeature intReturnType = new ReturnTypeFeature(MAPS, ANDROID, "int");
+		IFeature intReturnType = new ReturnTypeFeature(ANDROID, "int");
 		features.add(intReturnType);
-		IFeature byteArrayReturnType = new ReturnTypeFeature(MAPS, ANDROID, "byte[]");
+		IFeature byteArrayReturnType = new ReturnTypeFeature(ANDROID, "byte[]");
 		features.add(byteArrayReturnType);
-		IFeature cursorReturnType = new ReturnTypeFeature(MAPS, ANDROID, "android.database.Cursor");
+		IFeature cursorReturnType = new ReturnTypeFeature(ANDROID, "android.database.Cursor");
 		features.add(cursorReturnType);
 		/* Does not change anything
 		IFeature mergeCursorReturnType = new ReturnTypeFeature(MAPS, ANDROID, "android.database.MergeCursor");
@@ -1209,15 +1206,15 @@ public class SourceSinkFinder {
 		IFeature webviewReturnType = new ReturnTypeFeature(MAPS, ANDROID, "android.webkit.WebView");
 		features.add(webviewReturnType);
 		*/
-		IFeature uriReturnType = new ReturnTypeFeature(MAPS, ANDROID, "android.net.Uri");
+		IFeature uriReturnType = new ReturnTypeFeature(ANDROID, "android.net.Uri");
 		features.add(uriReturnType);
-		IFeature connectionReturnType = new ReturnTypeFeature(MAPS, ANDROID, "com.android.internal.telephony.Connection");
+		IFeature connectionReturnType = new ReturnTypeFeature(ANDROID, "com.android.internal.telephony.Connection");
 		features.add(connectionReturnType);
-		IFeature returnTypeImplementsInterfaceList = new ReturnTypeFeature(MAPS, ANDROID, "java.util.List");
+		IFeature returnTypeImplementsInterfaceList = new ReturnTypeFeature(ANDROID, "java.util.List");
 		features.add(returnTypeImplementsInterfaceList);
-		IFeature returnTypeImplementsInterfaceMap = new ReturnTypeFeature(MAPS, ANDROID, "java.util.Map");
+		IFeature returnTypeImplementsInterfaceMap = new ReturnTypeFeature(ANDROID, "java.util.Map");
 		features.add(returnTypeImplementsInterfaceMap);
-		IFeature returnTypeImplementsInterfaceParcelable = new ReturnTypeFeature(MAPS, ANDROID, "android.os.Parcelable");
+		IFeature returnTypeImplementsInterfaceParcelable = new ReturnTypeFeature(ANDROID, "android.os.Parcelable");
 		features.add(returnTypeImplementsInterfaceParcelable);
 		
 		IFeature hasParamsPerm = new MethodHasParametersFeature(0.2f);
@@ -1227,9 +1224,9 @@ public class SourceSinkFinder {
 		features.add(voidOnMethod);
 
 		/* Method modifiers */
-		IFeature isStaticMethod = new MethodModifierFeature(MAPS, ANDROID, Modifier.STATIC);
+		IFeature isStaticMethod = new MethodModifierFeature(ANDROID, Modifier.STATIC);
 		features.add(isStaticMethod);
-		IFeature isPublicMethod = new MethodModifierFeature(MAPS, ANDROID, Modifier.PUBLIC);
+		IFeature isPublicMethod = new MethodModifierFeature(ANDROID, Modifier.PUBLIC);
 		features.add(isPublicMethod);
 		/* Does not change anything
 		IFeature isNativeMethod = new MethodModifierFeature(MAPS, ANDROID, Modifier.NATIVE);
@@ -1239,23 +1236,23 @@ public class SourceSinkFinder {
 		IFeature isPrivateMethod = new MethodModifierFeature(MAPS, ANDROID, Modifier.PRIVATE);
 		features.add(isPrivateMethod);
 		*/
-		IFeature isProtectedMethod = new MethodModifierFeature(MAPS, ANDROID, Modifier.PROTECTED);
+		IFeature isProtectedMethod = new MethodModifierFeature(ANDROID, Modifier.PROTECTED);
 		features.add(isProtectedMethod);
-		IFeature isFinalMethod = new MethodModifierFeature(MAPS, ANDROID, Modifier.FINAL);
+		IFeature isFinalMethod = new MethodModifierFeature(ANDROID, Modifier.FINAL);
 		features.add(isFinalMethod);
 		
 		/* Class modifiers */
-		IFeature isPrivateClassOfMethod = new MethodClassModifierFeature(MAPS, ANDROID, ClassModifier.PRIVATE);
+		IFeature isPrivateClassOfMethod = new MethodClassModifierFeature(ANDROID, ClassModifier.PRIVATE);
 		features.add(isPrivateClassOfMethod);
-		IFeature isPublicClassOfMethod = new MethodClassModifierFeature(MAPS, ANDROID, ClassModifier.PUBLIC);
+		IFeature isPublicClassOfMethod = new MethodClassModifierFeature(ANDROID, ClassModifier.PUBLIC);
 		features.add(isPublicClassOfMethod);
-		IFeature isProtectedClassOfMethod = new MethodClassModifierFeature(MAPS, ANDROID, ClassModifier.PROTECTED);
+		IFeature isProtectedClassOfMethod = new MethodClassModifierFeature(ANDROID, ClassModifier.PROTECTED);
 		features.add(isProtectedClassOfMethod);
-		IFeature isStaticClassOfMethod = new MethodClassModifierFeature(MAPS, ANDROID, ClassModifier.STATIC);
+		IFeature isStaticClassOfMethod = new MethodClassModifierFeature(ANDROID, ClassModifier.STATIC);
 		features.add(isStaticClassOfMethod);
-		IFeature isFinalClassOfMethod = new MethodClassModifierFeature(MAPS, ANDROID, ClassModifier.FINAL);
+		IFeature isFinalClassOfMethod = new MethodClassModifierFeature(ANDROID, ClassModifier.FINAL);
 		features.add(isFinalClassOfMethod);
-		IFeature isAbstractClassOfMethod = new MethodClassModifierFeature(MAPS, ANDROID, ClassModifier.ABSTRACT);
+		IFeature isAbstractClassOfMethod = new MethodClassModifierFeature(ANDROID, ClassModifier.ABSTRACT);
 		features.add(isAbstractClassOfMethod);
 
 		/* Specific class properties */
@@ -1338,95 +1335,95 @@ public class SourceSinkFinder {
 		
 //		IFeature parameterInSink = new ParameterInCallFeature(MAPS, ANDROID, "", CheckType.CheckSink);
 //		features.add(parameterInSink);
-		IFeature parameterInRemove = new ParameterInCallFeature(MAPS, ANDROID, "remove", CheckType.CheckSink);
+		IFeature parameterInRemove = new ParameterInCallFeature(ANDROID, "remove", CheckType.CheckSink);
 		features.add(parameterInRemove);
-		IFeature parameterInSync = new ParameterInCallFeature(MAPS, ANDROID, "sync", CheckType.CheckSink);
+		IFeature parameterInSync = new ParameterInCallFeature(ANDROID, "sync", CheckType.CheckSink);
 		features.add(parameterInSync);
-		IFeature parameterInClear = new ParameterInCallFeature(MAPS, ANDROID, "clear", CheckType.CheckSink);
+		IFeature parameterInClear = new ParameterInCallFeature(ANDROID, "clear", CheckType.CheckSink);
 		features.add(parameterInClear);
-		IFeature parameterInOnCreate = new ParameterInCallFeature(MAPS, ANDROID, "onCreate", CheckType.CheckSink);
+		IFeature parameterInOnCreate = new ParameterInCallFeature(ANDROID, "onCreate", CheckType.CheckSink);
 		features.add(parameterInOnCreate);
-		IFeature parameterInDelete = new ParameterInCallFeature(MAPS, ANDROID, "delete", CheckType.CheckSink);
+		IFeature parameterInDelete = new ParameterInCallFeature(ANDROID, "delete", CheckType.CheckSink);
 		features.add(parameterInDelete);
-		IFeature parameterInSet = new ParameterInCallFeature(MAPS, ANDROID, "set", -1, false /*true*/, CheckType.CheckSink);
+		IFeature parameterInSet = new ParameterInCallFeature(ANDROID, "set", -1, false /*true*/, CheckType.CheckSink);
 		features.add(parameterInSet);
-		IFeature parameterInEnable = new ParameterInCallFeature(MAPS, ANDROID, "enable", CheckType.CheckSink);
+		IFeature parameterInEnable = new ParameterInCallFeature(ANDROID, "enable", CheckType.CheckSink);
 		features.add(parameterInEnable);
-		IFeature parameterInDisable = new ParameterInCallFeature(MAPS, ANDROID, "disable", CheckType.CheckSink);
+		IFeature parameterInDisable = new ParameterInCallFeature(ANDROID, "disable", CheckType.CheckSink);
 		features.add(parameterInDisable);
-		IFeature parameterInPut = new ParameterInCallFeature(MAPS, ANDROID, "put", -1, false /*true*/, CheckType.CheckSink);
+		IFeature parameterInPut = new ParameterInCallFeature(ANDROID, "put", -1, false /*true*/, CheckType.CheckSink);
 		features.add(parameterInPut);
-		IFeature parameterInStart = new ParameterInCallFeature(MAPS, ANDROID, "start", CheckType.CheckSink);
+		IFeature parameterInStart = new ParameterInCallFeature(ANDROID, "start", CheckType.CheckSink);
 		features.add(parameterInStart);
-		IFeature parameterInSave = new ParameterInCallFeature(MAPS, ANDROID, "save", CheckType.CheckSink);
+		IFeature parameterInSave = new ParameterInCallFeature(ANDROID, "save", CheckType.CheckSink);
 		features.add(parameterInSave);
-		IFeature parameterInSend = new ParameterInCallFeature(MAPS, ANDROID, "send", CheckType.CheckSink);
+		IFeature parameterInSend = new ParameterInCallFeature(ANDROID, "send", CheckType.CheckSink);
 		features.add(parameterInSend);
-		IFeature parameterInDump = new ParameterInCallFeature(MAPS, ANDROID, "dump", CheckType.CheckSink);
+		IFeature parameterInDump = new ParameterInCallFeature(ANDROID, "dump", CheckType.CheckSink);
 		features.add(parameterInDump);
-		IFeature parameterInDial = new ParameterInCallFeature(MAPS, ANDROID, "dial", CheckType.CheckSink);
+		IFeature parameterInDial = new ParameterInCallFeature(ANDROID, "dial", CheckType.CheckSink);
 		features.add(parameterInDial);
-		IFeature parameterInBroadcast = new ParameterInCallFeature(MAPS, ANDROID, "broadcast", CheckType.CheckSink);
+		IFeature parameterInBroadcast = new ParameterInCallFeature(ANDROID, "broadcast", CheckType.CheckSink);
 		features.add(parameterInBroadcast);
-		IFeature parameterInBind = new ParameterInCallFeature(MAPS, ANDROID, "bind", CheckType.CheckSink);
+		IFeature parameterInBind = new ParameterInCallFeature(ANDROID, "bind", CheckType.CheckSink);
 		features.add(parameterInBind);
-		IFeature parameterInTransact = new ParameterInCallFeature(MAPS, ANDROID, "transact", CheckType.CheckSink);
+		IFeature parameterInTransact = new ParameterInCallFeature(ANDROID, "transact", CheckType.CheckSink);
 		features.add(parameterInTransact);
-		IFeature parameterInWrite = new ParameterInCallFeature(MAPS, ANDROID, "write", CheckType.CheckSink);
+		IFeature parameterInWrite = new ParameterInCallFeature(ANDROID, "write", CheckType.CheckSink);
 		features.add(parameterInWrite);
-		IFeature parameterInUpdate = new ParameterInCallFeature(MAPS, ANDROID, "update", CheckType.CheckSink);
+		IFeature parameterInUpdate = new ParameterInCallFeature(ANDROID, "update", CheckType.CheckSink);
 		features.add(parameterInUpdate);
-		IFeature parameterInPerform = new ParameterInCallFeature(MAPS, ANDROID, "perform", CheckType.CheckSink);
+		IFeature parameterInPerform = new ParameterInCallFeature(ANDROID, "perform", CheckType.CheckSink);
 		features.add(parameterInPerform);
-		IFeature parameterInNotify = new ParameterInCallFeature(MAPS, ANDROID, "notify", CheckType.CheckSink);
+		IFeature parameterInNotify = new ParameterInCallFeature(ANDROID, "notify", CheckType.CheckSink);
 		features.add(parameterInNotify);
-		IFeature parameterInInsert = new ParameterInCallFeature(MAPS, ANDROID, "insert", CheckType.CheckSink);
+		IFeature parameterInInsert = new ParameterInCallFeature(ANDROID, "insert", CheckType.CheckSink);
 		features.add(parameterInInsert);
-		IFeature parameterInEnqueue = new ParameterInCallFeature(MAPS, ANDROID, "enqueue", CheckType.CheckSink);
+		IFeature parameterInEnqueue = new ParameterInCallFeature(ANDROID, "enqueue", CheckType.CheckSink);
 		features.add(parameterInEnqueue);
-		IFeature parameterInReplace = new ParameterInCallFeature(MAPS, ANDROID, "replace", CheckType.CheckSink);
+		IFeature parameterInReplace = new ParameterInCallFeature(ANDROID, "replace", CheckType.CheckSink);
 		features.add(parameterInReplace);
-		IFeature parameterInShow = new ParameterInCallFeature(MAPS, ANDROID, "show", CheckType.CheckSink);
+		IFeature parameterInShow = new ParameterInCallFeature(ANDROID, "show", CheckType.CheckSink);
 		features.add(parameterInShow);
-		IFeature parameterInDispatch = new ParameterInCallFeature(MAPS, ANDROID, "dispatch", CheckType.CheckSink);
+		IFeature parameterInDispatch = new ParameterInCallFeature(ANDROID, "dispatch", CheckType.CheckSink);
 		features.add(parameterInDispatch);
 		/* Does not change anything
 		IFeature parameterInPrint = new ParameterInCallFeature(MAPS, ANDROID, "print", CheckType.CheckSink);
 		features.add(parameterInPrint);
 		*/
-		IFeature parameterInPrintln = new ParameterInCallFeature(MAPS, ANDROID, "println", CheckType.CheckSink);
+		IFeature parameterInPrintln = new ParameterInCallFeature(ANDROID, "println", CheckType.CheckSink);
 		features.add(parameterInPrintln);
-		IFeature parameterInCreate = new ParameterInCallFeature(MAPS, ANDROID, "create", CheckType.CheckSink);
+		IFeature parameterInCreate = new ParameterInCallFeature(ANDROID, "create", CheckType.CheckSink);
 		features.add(parameterInCreate);
-		IFeature parameterInAdjust = new ParameterInCallFeature(MAPS, ANDROID, "adjust", CheckType.CheckSink);
+		IFeature parameterInAdjust = new ParameterInCallFeature(ANDROID, "adjust", CheckType.CheckSink);
 		features.add(parameterInAdjust);
-		IFeature parameterInSetup = new ParameterInCallFeature(MAPS, ANDROID, "setup", CheckType.CheckSink);
+		IFeature parameterInSetup = new ParameterInCallFeature(ANDROID, "setup", CheckType.CheckSink);
 		features.add(parameterInSetup);
-		IFeature parameterInRestore = new ParameterInCallFeature(MAPS, ANDROID, "restore", CheckType.CheckSink);
+		IFeature parameterInRestore = new ParameterInCallFeature(ANDROID, "restore", CheckType.CheckSink);
 		features.add(parameterInRestore);
-		IFeature parameterInConnect = new ParameterInCallFeature(MAPS, ANDROID, "connect", CheckType.CheckSink);
+		IFeature parameterInConnect = new ParameterInCallFeature(ANDROID, "connect", CheckType.CheckSink);
 		features.add(parameterInConnect);
 		
-		IFeature parameterInAbstract = new ParameterInCallFeature(MAPS, ANDROID, "", CheckType.CheckSinkInAbstract);
+		IFeature parameterInAbstract = new ParameterInCallFeature(ANDROID, "", CheckType.CheckSinkInAbstract);
 		features.add(parameterInAbstract);
-		IFeature parameterInCI = new ParameterInCallFeature(MAPS, ANDROID,
+		IFeature parameterInCI = new ParameterInCallFeature(ANDROID,
 				"com.android.internal.telephony.CommandsInterface", CheckType.CheckSink);
 		features.add(parameterInCI);
 
-		IFeature getInReturn = new ParameterInCallFeature(MAPS, ANDROID, "get", CheckType.CheckSource);
+		IFeature getInReturn = new ParameterInCallFeature(ANDROID, "get", CheckType.CheckSource);
 		features.add(getInReturn);
-		IFeature queryInReturn = new ParameterInCallFeature(MAPS, ANDROID, "query", CheckType.CheckSource);
+		IFeature queryInReturn = new ParameterInCallFeature(ANDROID, "query", CheckType.CheckSource);
 		features.add(queryInReturn);
 //		IFeature ctalInReturn = new ParameterInCallFeature("createTypedArrayList", CheckType.CheckSource);
 //		features.add(ctalInReturn);
-		IFeature createInReturn = new ParameterInCallFeature(MAPS, ANDROID, "create", CheckType.CheckSource);
+		IFeature createInReturn = new ParameterInCallFeature(ANDROID, "create", CheckType.CheckSource);
 		features.add(createInReturn);
-		IFeature obtainMessageInReturn = new ParameterInCallFeature(MAPS, ANDROID, "obtainMessage", CheckType.CheckSource);
+		IFeature obtainMessageInReturn = new ParameterInCallFeature(ANDROID, "obtainMessage", CheckType.CheckSource);
 		features.add(obtainMessageInReturn);
-		IFeature isInReturn = new ParameterInCallFeature(MAPS, ANDROID, "is", CheckType.CheckSource);
+		IFeature isInReturn = new ParameterInCallFeature(ANDROID, "is", CheckType.CheckSource);
 		features.add(isInReturn);
 		
-		IFeature parameterInNative = new ParameterInCallFeature(MAPS, ANDROID, "", CheckType.CheckFromParamToNative);
+		IFeature parameterInNative = new ParameterInCallFeature(ANDROID, "", CheckType.CheckFromParamToNative);
 		features.add(parameterInNative);
 //		IFeature parameterInNative = new ParameterInCallFeature(MAPS, ANDROID, "", CheckType.CheckFromParamToInterface);
 //		features.add(parameterInNative);
@@ -1435,15 +1432,15 @@ public class SourceSinkFinder {
 		IFeature transactArgument2InReturn = new ParameterInCallFeature(MAPS, ANDROID, "transact", 2, false, CheckType.CheckSource);
 		features.add(transactArgument2InReturn);
 		*/
-		IFeature wtParcelArgument1InReturn = new ParameterInCallFeature(MAPS, ANDROID, "writeToParcel", 0, false, CheckType.CheckSource);
+		IFeature wtParcelArgument1InReturn = new ParameterInCallFeature(ANDROID, "writeToParcel", 0, false, CheckType.CheckSource);
 		features.add(wtParcelArgument1InReturn);
 		
-		IFeature getToSink = new ParameterInCallFeature(MAPS, ANDROID, "get", CheckType.CheckFromMethodToSink);
+		IFeature getToSink = new ParameterInCallFeature(ANDROID, "get", CheckType.CheckFromMethodToSink);
 		features.add(getToSink);
 
-		IFeature threadRun = new IsThreadRunFeature(MAPS, ANDROID);
+		IFeature threadRun = new IsThreadRunFeature(ANDROID);
 		features.add(threadRun);
-		IFeature methodReturnsConstant = new MethodReturnsConstantFeature(MAPS, ANDROID);
+		IFeature methodReturnsConstant = new MethodReturnsConstantFeature(ANDROID);
 		features.add(methodReturnsConstant);
 
 		//sink feature
@@ -1463,10 +1460,10 @@ public class SourceSinkFinder {
 		
 //		IFeature notifyCalled = new MethodCallsMethodFeature(MAPS, ANDROID, "notify");
 //		features.add(notifyCalled);
-		IFeature notifyCalled = new MethodCallsMethodFeature(MAPS, ANDROID, "android.database.sqlite.SQLiteDatabase", "insert");
+		IFeature notifyCalled = new MethodCallsMethodFeature(ANDROID, "android.database.sqlite.SQLiteDatabase", "insert");
 		features.add(notifyCalled);
 		
-		IFeature interfaceParameter = new ParameterIsInterfaceFeature(MAPS, ANDROID);
+		IFeature interfaceParameter = new ParameterIsInterfaceFeature(ANDROID);
 		features.add(interfaceParameter);
 
 		/* Does not change anything
@@ -1474,7 +1471,7 @@ public class SourceSinkFinder {
 		features.add(binderCalled);
 		*/
 		
-		IFeature isSetter = new MethodIsRealSetterFeature(MAPS, ANDROID);
+		IFeature isSetter = new MethodIsRealSetterFeature(ANDROID);
 		features.add(isSetter);
 
 //		IFeature invokeAdd = new MethodInvocationOnParameterFeature(MAPS, "ANDROID", "add");
@@ -1821,89 +1818,89 @@ public class SourceSinkFinder {
 		IFeature paramSip = new ParameterContainsTypeOrNameFeature(".Sip");
 		features.add(paramSip);
 
-		IFeature parameterInDial = new ParameterInCallFeature(MAPS, ANDROID, "dial", CheckType.CheckSink);
+		IFeature parameterInDial = new ParameterInCallFeature(ANDROID, "dial", CheckType.CheckSink);
 		features.add(parameterInDial);
-		IFeature parameterInSend = new ParameterInCallFeature(MAPS, ANDROID, "send", CheckType.CheckSink);
+		IFeature parameterInSend = new ParameterInCallFeature(ANDROID, "send", CheckType.CheckSink);
 		features.add(parameterInSend);
-		IFeature parameterInBroadcast = new ParameterInCallFeature(MAPS, ANDROID, "broadcast", CheckType.CheckSink);
+		IFeature parameterInBroadcast = new ParameterInCallFeature(ANDROID, "broadcast", CheckType.CheckSink);
 		features.add(parameterInBroadcast);
 
-		IFeature returnTypeCellLocation = new ReturnTypeFeature(MAPS, ANDROID, "android.telephony.CellLocation");
+		IFeature returnTypeCellLocation = new ReturnTypeFeature(ANDROID, "android.telephony.CellLocation");
 		features.add(returnTypeCellLocation);
-		IFeature returnTypeCountry = new ReturnTypeFeature(MAPS, ANDROID, "android.location.Country");
+		IFeature returnTypeCountry = new ReturnTypeFeature(ANDROID, "android.location.Country");
 		features.add(returnTypeCountry);
-		IFeature returnTypeString = new ReturnTypeFeature(MAPS, ANDROID, "java.lang.String");
+		IFeature returnTypeString = new ReturnTypeFeature(ANDROID, "java.lang.String");
 		features.add(returnTypeString);
-		IFeature returnTypeBitmap = new ReturnTypeFeature(MAPS, ANDROID, "android.graphics.Bitmap");
+		IFeature returnTypeBitmap = new ReturnTypeFeature(ANDROID, "android.graphics.Bitmap");
 		features.add(returnTypeBitmap);
-		IFeature returnTypeAccountArray = new ReturnTypeFeature(MAPS, ANDROID, "android.accounts.Account[]");
+		IFeature returnTypeAccountArray = new ReturnTypeFeature(ANDROID, "android.accounts.Account[]");
 		features.add(returnTypeAccountArray);
-		IFeature returnTypeIterator = new ReturnTypeFeature(MAPS, ANDROID, "java.util.Iterator");
+		IFeature returnTypeIterator = new ReturnTypeFeature(ANDROID, "java.util.Iterator");
 		features.add(returnTypeIterator);
-		IFeature returnTypeDrawable = new ReturnTypeFeature(MAPS, ANDROID, "android.graphics.drawable.Drawable");
+		IFeature returnTypeDrawable = new ReturnTypeFeature(ANDROID, "android.graphics.drawable.Drawable");
 		features.add(returnTypeDrawable);
-		IFeature returnTypeNFCTag = new ReturnTypeFeature(MAPS, ANDROID, "android.nfc.Tag");
+		IFeature returnTypeNFCTag = new ReturnTypeFeature(ANDROID, "android.nfc.Tag");
 		features.add(returnTypeNFCTag);
-		IFeature returnTypeSIPHeader = new ReturnTypeFeature(MAPS, ANDROID, "gov.nist.javax.sip.header.SIPHeader");
+		IFeature returnTypeSIPHeader = new ReturnTypeFeature(ANDROID, "gov.nist.javax.sip.header.SIPHeader");
 		features.add(returnTypeSIPHeader);
-		IFeature returnTypeSocket = new ReturnTypeFeature(MAPS, ANDROID, "java.net.Socket");
+		IFeature returnTypeSocket = new ReturnTypeFeature(ANDROID, "java.net.Socket");
 		features.add(returnTypeSocket);
-		IFeature returnTypeURL = new ReturnTypeFeature(MAPS, ANDROID, "java.net.URLConnection");
+		IFeature returnTypeURL = new ReturnTypeFeature(ANDROID, "java.net.URLConnection");
 		features.add(returnTypeURL);
 
 		IFeature parameterTypeHasFileDescriptor = new ParameterContainsTypeOrNameFeature("java.io.FileDescriptor");
 		features.add(parameterTypeHasFileDescriptor);
 		
-		IFeature callsMessageMethod = new MethodCallsMethodFeature(MAPS, ANDROID, "", "Icc", true);
+		IFeature callsMessageMethod = new MethodCallsMethodFeature(ANDROID, "", "Icc", true);
 		features.add(callsMessageMethod);
-		IFeature callsSystemProperties = new MethodCallsMethodFeature(MAPS, ANDROID, "android.os.SystemProperties", "get");
+		IFeature callsSystemProperties = new MethodCallsMethodFeature(ANDROID, "android.os.SystemProperties", "get");
 		features.add(callsSystemProperties);
-		IFeature callsSystemSettings = new MethodCallsMethodFeature(MAPS, ANDROID, "android.provider.Settings", "put");
+		IFeature callsSystemSettings = new MethodCallsMethodFeature(ANDROID, "android.provider.Settings", "put");
 		features.add(callsSystemSettings);
-		IFeature callsCellLocation = new MethodCallsMethodFeature(MAPS, ANDROID, "", "getCellLocation");
+		IFeature callsCellLocation = new MethodCallsMethodFeature(ANDROID, "", "getCellLocation");
 		features.add(callsCellLocation);
 		
-		IFeature methodBodyContainsAccounts = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.accounts.Account");
+		IFeature methodBodyContainsAccounts = new MethodBodyContainsObjectFeature(ANDROID, "android.accounts.Account");
 		features.add(methodBodyContainsAccounts);
-		IFeature methodBodyContainsAccountManger = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.accounts.AccountManager");
+		IFeature methodBodyContainsAccountManger = new MethodBodyContainsObjectFeature(ANDROID, "android.accounts.AccountManager");
 		features.add(methodBodyContainsAccountManger);
-		IFeature methodBodyContainsPhoneSubInfo = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.internal.telephony.IPhoneSubInfo");
+		IFeature methodBodyContainsPhoneSubInfo = new MethodBodyContainsObjectFeature(ANDROID, "com.android.internal.telephony.IPhoneSubInfo");
 		features.add(methodBodyContainsPhoneSubInfo);
-		IFeature methodBodyContainsPhone = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.internal.telephony.Phone");
+		IFeature methodBodyContainsPhone = new MethodBodyContainsObjectFeature(ANDROID, "com.android.internal.telephony.Phone");
 		features.add(methodBodyContainsPhone);
-		IFeature methodBodyContainsSMSManager = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.telephony.SmsManager");
+		IFeature methodBodyContainsSMSManager = new MethodBodyContainsObjectFeature(ANDROID, "android.telephony.SmsManager");
 		features.add(methodBodyContainsSMSManager);
-		IFeature methodBodyContainsILocationManager = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.location.ILocationManager");
+		IFeature methodBodyContainsILocationManager = new MethodBodyContainsObjectFeature(ANDROID, "android.location.ILocationManager");
 		features.add(methodBodyContainsILocationManager);
-		IFeature methodBodyContainsLocationRequest = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.location.LocationRequest");
+		IFeature methodBodyContainsLocationRequest = new MethodBodyContainsObjectFeature(ANDROID, "android.location.LocationRequest");
 		features.add(methodBodyContainsLocationRequest);
-		IFeature methodBodyContainsLocationListener = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.location.LocationListener");
+		IFeature methodBodyContainsLocationListener = new MethodBodyContainsObjectFeature(ANDROID, "android.location.LocationListener");
 		features.add(methodBodyContainsLocationListener);
-		IFeature methodBodyContainsCellLocation = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.telephony.CellLocation");
+		IFeature methodBodyContainsCellLocation = new MethodBodyContainsObjectFeature(ANDROID, "android.telephony.CellLocation");
 		features.add(methodBodyContainsCellLocation);
-		IFeature methodBodyContainsBitmap = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.graphics.Bitmap");
+		IFeature methodBodyContainsBitmap = new MethodBodyContainsObjectFeature(ANDROID, "android.graphics.Bitmap");
 		features.add(methodBodyContainsBitmap);
-		IFeature methodBodyContainsMediaSet = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.gallery3d.data.MediaSet");
+		IFeature methodBodyContainsMediaSet = new MethodBodyContainsObjectFeature(ANDROID, "com.android.gallery3d.data.MediaSet");
 		features.add(methodBodyContainsMediaSet);
-		IFeature methodBodyContainsISMS = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.internal.telephony.ISms");
+		IFeature methodBodyContainsISMS = new MethodBodyContainsObjectFeature(ANDROID, "com.android.internal.telephony.ISms");
 		features.add(methodBodyContainsISMS);
-		IFeature methodBodyContainsSmsRawData = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.internal.telephony.SmsRawData");
+		IFeature methodBodyContainsSmsRawData = new MethodBodyContainsObjectFeature(ANDROID, "com.android.internal.telephony.SmsRawData");
 		features.add(methodBodyContainsSmsRawData);
-		IFeature methodBodyContainsView = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.view.View");
+		IFeature methodBodyContainsView = new MethodBodyContainsObjectFeature(ANDROID, "android.view.View");
 		features.add(methodBodyContainsView);
-		IFeature methodBodyContainsViewGroup = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.view.ViewGroup");
+		IFeature methodBodyContainsViewGroup = new MethodBodyContainsObjectFeature(ANDROID, "android.view.ViewGroup");
 		features.add(methodBodyContainsViewGroup);
-		IFeature methodBodyContainsSnapshotProvider = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.browser.provider.SnapshotProvider");
+		IFeature methodBodyContainsSnapshotProvider = new MethodBodyContainsObjectFeature(ANDROID, "com.android.browser.provider.SnapshotProvider");
 		features.add(methodBodyContainsSnapshotProvider);
-		IFeature methodBodyContainsFileWriter = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "java.io.FileWriter");
+		IFeature methodBodyContainsFileWriter = new MethodBodyContainsObjectFeature(ANDROID, "java.io.FileWriter");
 		features.add(methodBodyContainsFileWriter);
-		IFeature methodBodyContainsFileDescriptor = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "java.io.FileDescriptor");
+		IFeature methodBodyContainsFileDescriptor = new MethodBodyContainsObjectFeature(ANDROID, "java.io.FileDescriptor");
 		features.add(methodBodyContainsFileDescriptor);
-		IFeature methodBodyContainsFile = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "java.io.File");
+		IFeature methodBodyContainsFile = new MethodBodyContainsObjectFeature(ANDROID, "java.io.File");
 		features.add(methodBodyContainsFile);
-		IFeature methodBodyContainsLog = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "android.util.Log");
+		IFeature methodBodyContainsLog = new MethodBodyContainsObjectFeature(ANDROID, "android.util.Log");
 		features.add(methodBodyContainsLog);
-		IFeature methodBodyContainsBattery = new MethodBodyContainsObjectFeature(MAPS, ANDROID, "com.android.internal.os.BatteryStatsImpl");
+		IFeature methodBodyContainsBattery = new MethodBodyContainsObjectFeature(ANDROID, "com.android.internal.os.BatteryStatsImpl");
 		features.add(methodBodyContainsBattery);
 
 		return features;

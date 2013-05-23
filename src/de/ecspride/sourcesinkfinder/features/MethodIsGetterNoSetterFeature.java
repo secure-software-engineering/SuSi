@@ -23,8 +23,8 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
  */
 public class MethodIsGetterNoSetterFeature extends AbstractSootFeature {
 
-	public MethodIsGetterNoSetterFeature(String mapsJAR, String androidJAR) {
-		super(mapsJAR, androidJAR);
+	public MethodIsGetterNoSetterFeature(String androidJAR) {
+		super(androidJAR);
 	}
 	
 	@Override

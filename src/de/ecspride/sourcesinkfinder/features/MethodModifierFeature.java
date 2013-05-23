@@ -15,8 +15,8 @@ public class MethodModifierFeature extends AbstractSootFeature {
 	private final Modifier modifier;
 	
 	
-	public MethodModifierFeature(String mapsJAR, String androidJAR, Modifier modifier) {
-		super(mapsJAR, androidJAR);
+	public MethodModifierFeature(String androidJAR, Modifier modifier) {
+		super(androidJAR);
 		this.modifier = modifier;
 	}
 	

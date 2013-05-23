@@ -7,8 +7,8 @@ public class MethodInnerClassFeature extends AbstractSootFeature {
 
 	private final boolean innerClass;
 	
-	public MethodInnerClassFeature(String mapsJAR, String androidJAR, boolean innerClass) {
-		super(mapsJAR, androidJAR);
+	public MethodInnerClassFeature(String androidJAR, boolean innerClass) {
+		super(androidJAR);
 		this.innerClass = innerClass;
 	}
 	

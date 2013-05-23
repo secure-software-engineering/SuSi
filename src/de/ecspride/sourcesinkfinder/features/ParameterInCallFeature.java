@@ -62,19 +62,19 @@ public class ParameterInCallFeature extends AbstractSootFeature {
 	private final int argumentPosition;
 	private final boolean restrictPackage;
 	
-	public ParameterInCallFeature(String mapsJAR, String androidJAR,
-			String methodName, CheckType checkType) {
-		this(mapsJAR, androidJAR, methodName, -1, false, checkType);
+	public ParameterInCallFeature(String androidJAR, String methodName,
+			CheckType checkType) {
+		this(androidJAR, methodName, -1, false, checkType);
 	}
 	
-	public ParameterInCallFeature(String mapsJAR, String androidJAR,
-			String methodName, boolean restrictPackage, CheckType checkType) {
-		this(mapsJAR, androidJAR, methodName, -1, restrictPackage, checkType);
+	public ParameterInCallFeature(String androidJAR, String methodName,
+			boolean restrictPackage, CheckType checkType) {
+		this(androidJAR, methodName, -1, restrictPackage, checkType);
 	}
 
-	public ParameterInCallFeature(String mapsJAR, String androidJAR,
+	public ParameterInCallFeature(String androidJAR,
 			String methodName, int parameterPostion, boolean restrictPackage, CheckType checkType) {
-		super(mapsJAR, androidJAR);
+		super(androidJAR);
 		this.methodName = methodName;
 		this.checkType = checkType;
 		

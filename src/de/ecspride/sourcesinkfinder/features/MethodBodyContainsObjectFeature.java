@@ -13,8 +13,8 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
 public class MethodBodyContainsObjectFeature extends AbstractSootFeature {
 	private final String objectName;
 	
-	public MethodBodyContainsObjectFeature(String mapsJAR, String androidJAR, String objectName){
-		super(mapsJAR, androidJAR);
+	public MethodBodyContainsObjectFeature(String androidJAR, String objectName){
+		super(androidJAR);
 		this.objectName = objectName.trim().toLowerCase();
 	}
 	
