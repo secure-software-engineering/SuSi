@@ -52,10 +52,8 @@ public class MethodIsGetterNoSetterFeature extends AbstractSootFeature {
 				return Type.NOT_SUPPORTED;
 
 			Body bodyGetter = null;
-			Body bodySetter = null;
 			try{
 				bodyGetter = getter.retrieveActiveBody();
-				bodySetter = setter.retrieveActiveBody();
 			}catch(Exception ex){
 				return Type.NOT_SUPPORTED;
 			}

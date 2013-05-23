@@ -317,6 +317,12 @@ public class ParameterInCallFeature extends AbstractSootFeature {
 			return "<Value from method " + methodName + " to sink method>";
 		case CheckFromParamToNative :
 			return "<Value from method parameter to native method>";
+		case CheckFromInterfaceToResult:
+			return "<Value from interface method to return>";
+		case CheckFromParamToInterface:
+			return "<Value from parameter to interface method>";
+		default:
+			break;
 		}
 		return "";
 	}
