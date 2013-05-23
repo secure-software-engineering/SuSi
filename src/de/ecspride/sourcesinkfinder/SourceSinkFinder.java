@@ -115,7 +115,13 @@ public class SourceSinkFinder {
 	 * 				*Last parameter: file name of output
 	 */
 	public static void main(String[] args) {
-		try {			
+		try {
+			if (args.length < 4) {
+				System.out.println("Usage: java de.ecspride.sourcesinkfinder.SourceSinkFinder "
+						+ "<androidJAR> <mapsJAR> <input1>...<inputN> <outputFile>");
+				return;
+			}
+			
 			String[] inputs = Arrays.copyOfRange(args, 2, args.length-1);
 			
 			//set Android paths
