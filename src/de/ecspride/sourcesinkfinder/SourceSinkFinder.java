@@ -4,13 +4,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -20,11 +20,19 @@ import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.jimple.infoflow.android.data.AndroidMethod;
+import soot.jimple.infoflow.android.data.AndroidMethod.CATEGORY;
 import soot.jimple.infoflow.android.data.AndroidMethodCategoryComparator;
 import soot.jimple.infoflow.android.data.parsers.CSVPermissionMethodParser;
 import soot.jimple.infoflow.android.data.parsers.IPermissionMethodParser;
 import soot.jimple.infoflow.android.data.parsers.PScoutPermissionMethodParser;
 import soot.jimple.infoflow.android.data.parsers.PermissionMethodParser;
+import soot.jimple.infoflow.data.SootMethodAndClass;
+import soot.jimple.infoflow.rifl.RIFLDocument;
+import soot.jimple.infoflow.rifl.RIFLDocument.Category;
+import soot.jimple.infoflow.rifl.RIFLDocument.DomPairType;
+import soot.jimple.infoflow.rifl.RIFLDocument.SourceSinkSpec;
+import soot.jimple.infoflow.rifl.RIFLWriter;
+import soot.jimple.infoflow.util.SootMethodRepresentationParser;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.bayes.BayesNet;
@@ -75,16 +83,13 @@ import de.ecspride.sourcesinkfinder.features.VoidOnMethodFeature;
  */
 public class SourceSinkFinder {
 	
-	private final static boolean USE_WEKA = true;
-	private final static boolean DETAILED_INFORMATION = false;
 	private final static boolean ENABLE_PERMISSION = true;
 
-	private final static boolean LOAD_ANDROID = false;
+	private final static boolean LOAD_ANDROID = true;
 	private final static boolean DIFF = false;
 	
 	private final static boolean CLASSIFY_CATEGORY = true;
 
-	private final static float MIN_PROB = 0.0001f;
 	private final Set<IFeature> featuresSourceSink = initializeFeaturesSourceSink();
 	private final Set<IFeature> featuresCategories = initializeFeaturesCategories();
 	
@@ -153,19 +158,13 @@ public class SourceSinkFinder {
 			createSubclassAnnotations(methods);
 		}
 		
+		printStatistics(methods);
+		
 		// Classify the methods into sources, sinks and neither-nor entries
-		if (USE_WEKA){
-			startSourceSinkAnalysisTime = System.currentTimeMillis();
-			analyzeSourceSinkWeka(methods, outputFile);
-			sourceSinkAnalysisTime = System.currentTimeMillis() - startSourceSinkAnalysisTime;
-			System.out.println("Time to classify sources/sinks/neither: " + sourceSinkAnalysisTime + " ms");
-		}
-		else{
-			startSourceSinkAnalysisTime = System.currentTimeMillis();
-			analyzeSourceSinkBayes(methods, outputFile);
-			sourceSinkAnalysisTime = System.currentTimeMillis() - startSourceSinkAnalysisTime;
-			System.out.println("Time to classify sources/sinks/neither: " + sourceSinkAnalysisTime + " ms");
-		}
+		startSourceSinkAnalysisTime = System.currentTimeMillis();
+		analyzeSourceSinkWeka(methods, outputFile);
+		sourceSinkAnalysisTime = System.currentTimeMillis() - startSourceSinkAnalysisTime;
+		System.out.println("Time to classify sources/sinks/neither: " + sourceSinkAnalysisTime + " ms");
 		
 		// Classify the categories
 		if(CLASSIFY_CATEGORY){
@@ -181,137 +180,22 @@ public class SourceSinkFinder {
 			catSinksTime = System.currentTimeMillis() - startCatSinksTime;
 			System.out.println("Time to categorize sinks: " + catSinksTime + " ms");
 		}
+		writeRIFLSpecification(outputFile, methods);
 	}
 	
-	/**
-	 * Uses a custom NaiveBayes implementation for classifying Android methods
-	 * as sources, sinks, or neither-nor entries.
-	 * @param sourceFileName
-	 * @param targetFileName
-	 * @throws IOException
-	 */
-	private void analyzeSourceSinkBayes(Set<AndroidMethod> methods, String targetFileName) throws IOException {
-		Map<IFeature, Double> sourceProps = new HashMap<IFeature, Double>();
-		Map<IFeature, Double> sinkProps = new HashMap<IFeature, Double>();
-		Map<IFeature, Double> neitherNorProps = new HashMap<IFeature, Double>();
-						
-		// Train the classifier
-		List<AndroidMethod> sources = new ArrayList<AndroidMethod>();
-		List<AndroidMethod> sinks = new ArrayList<AndroidMethod>();
-		List<AndroidMethod> neitherNor = new ArrayList<AndroidMethod>();
-		long trainingSetSize = 0;
-		for (AndroidMethod method : methods) {
-			if (method.isSource())
-				sources.add(method);
-			if (method.isSink())
-				sinks.add(method);
-			if (method.isNeitherNor())
-				neitherNor.add(method);
-			if (method.isSource() || method.isSink() || method.isNeitherNor())
-				trainingSetSize++;
-		}
-		
-		if(DETAILED_INFORMATION)
-			analyseFeatureSpreading(featuresSourceSink, methods, sources, sinks, neitherNor);
-		
-		System.out.println("Training set of " + trainingSetSize + " entries, that is "
-				+ trainingSetSize / (float) methods.size() * 100 + "% of all data");
-		System.out.println("We have " + sources.size() + " sources, " + sinks.size()
-				+ " sinks and " + neitherNor.size() + " neither/nor entries");
-		
-		for (IFeature feature : featuresSourceSink) {
-			int sourceCount = 0;
-			int sinkCount = 0;
-			int neitherNorCount = 0;
-
-			for (AndroidMethod method : sources)
-				if (feature.applies(method) == Type.TRUE)
-					sourceCount++;
-			for (AndroidMethod method : sinks)
-				if (feature.applies(method) == Type.TRUE)
-					sinkCount++;
-			for (AndroidMethod method : neitherNor)
-				if (feature.applies(method) == Type.TRUE)
-					neitherNorCount++;
-			
-			if (sourceCount == 0 && sinkCount == 0 && neitherNorCount == 0) {
-				System.err.println("Feature " + feature  + " never applies in training set");
-				continue;
-			}
-			
-			double sourceProb = (double) sourceCount / sources.size();
-			double sinkProb = (double) sinkCount / sinks.size();
-			double neitherNorProb = (double) neitherNorCount / neitherNor.size();
-			
-			sourceProps.put(feature, Math.max(sourceProb, MIN_PROB));
-			sinkProps.put(feature, Math.max(sinkProb, MIN_PROB));
-			neitherNorProps.put(feature, Math.max(neitherNorProb, MIN_PROB));
-		}
-		
-		System.out.println("Source conditional probabilities:");
-		for (Map.Entry<IFeature, Double> cell : sourceProps.entrySet())
-			System.out.println("\t" + cell.getKey() + "\t" + cell.getValue());
-		System.out.println("Sink conditional probabilities:");
-		for (Map.Entry<IFeature, Double> cell : sinkProps.entrySet())
-			System.out.println("\t" + cell.getKey() + "\t" + cell.getValue());
-		System.out.println("Neither/nor conditional probabilities:");
-		for (Map.Entry<IFeature, Double> cell : neitherNorProps.entrySet())
-			System.out.println("\t" + cell.getKey() + "\t" + cell.getValue());
-		
-		double sourcePrior = (double) sources.size() / trainingSetSize;
-		double sinkPrior = (double) sinks.size() / trainingSetSize;
-		double neitherNorPrior = (double) neitherNor.size() / trainingSetSize;
-		System.out.println("Source prior is " + sourcePrior + ", sink prior is " + sinkPrior
-				+ ", neither/nor prior is " + neitherNorPrior);
-		
-		// Classify 'em all!
-		long classifiedSource = 0;
-		long classifiedSink = 0;
-		long classifiedNeitherNor = 0;
-		for (AndroidMethod method : methods) {
-			// Don't classify stuff from our training set
-			if (method.isSource() || method.isSink() || method.isNeitherNor())
-				continue;
-			
-			// Bayes
-			double pSource = sourcePrior;
-			double pSink = sinkPrior;
-			double pNeitherNor = neitherNorPrior;
-			for (IFeature feature : featuresSourceSink) { 
-				if (!sourceProps.containsKey(feature) && !sinkProps.containsKey(feature)
-						&& !neitherNorProps.containsKey(feature))
-					continue;
-			
-				if (feature.applies(method) == Type.TRUE) {
-					pSource *= sourceProps.get(feature);
-					pSink *= sinkProps.get(feature);
-					pNeitherNor *= neitherNorProps.get(feature);
-				}
-				else {
-					pSource *= 1 - sourceProps.get(feature);
-					pSink *= 1 - sinkProps.get(feature);
-					pNeitherNor *= 1 - neitherNorProps.get(feature);
-				}
-			}
-			
-			if (pNeitherNor >= pSink && pNeitherNor >= pSource) {
-				method.setNeitherNor(true);
-				classifiedNeitherNor++;
-			}
-			else if (pSource >= pSink && pSource >= pNeitherNor) {
-				method.setSource(true);
-				classifiedSource++;
-			}
-			else if (pSink >= pSource && pSink >= pNeitherNor) {
-				method.setSink(true);
-				classifiedSink++;
-			}
-		}
-		System.out.println("We have found " + classifiedSource + " sources, "
-				+ classifiedSink + " sinks, and " + classifiedNeitherNor
-				+ " neither/nor entries");
-		
-		writeCategoriesToFiles(targetFileName, methods);
+	private void printStatistics(Set<AndroidMethod> methods) {
+		int sources = 0;
+		int sinks = 0;
+		int neither = 0;
+		for (AndroidMethod am : methods)
+			if (am.isSource())
+				sources++;
+			else if (am.isSink())
+				sinks++;
+			else if (am.isNeitherNor())
+				neither++;
+		System.out.println("Annotated sources: " + sources + ", sinks: " + sinks
+				+ ", neither: " + neither);
 	}
 
 	private void writeResultsToFiles(String targetFileName,
@@ -420,24 +304,79 @@ public class SourceSinkFinder {
 		}
 	}
 	
-	
-	private void writeCategoriesToFiles(String targetFileName,
+	private void writeRIFLSpecification(String targetFileName,
 			Set<AndroidMethod> methods) throws IOException {
-		// Dump the stuff
-		BufferedWriter wr = null;
-		try {
-			wr = new BufferedWriter(new FileWriter(appendFileName(targetFileName, "_Catgories")));
-			for (AndroidMethod am : methods)
-				wr.write(am.toString() + "\n");
-			wr.flush();
-			wr.close();
-		}
-		finally {
-			if (wr != null)
-				wr.close();
-		}
-	}
+		RIFLDocument doc = new RIFLDocument();
+		
+		doc.getFlowPolicy().add(doc.new FlowPair(doc.getTopDomain(), doc.getTopDomain()));
+		doc.getFlowPolicy().add(doc.new FlowPair(doc.getBottomDomain(), doc.getBottomDomain()));
+		doc.getFlowPolicy().add(doc.new FlowPair(doc.getBottomDomain(), doc.getTopDomain()));
+		
+		Map<CATEGORY, Category> categoryMap = new HashMap<CATEGORY, Category>();
+		
+		for (AndroidMethod am : methods) {
+			// Parse the class and package names
+			SootMethodAndClass smac = SootMethodRepresentationParser.v().parseSootMethodString
+					(am.getSignature());
+			String packageName = smac.getClassName().substring(0, smac.getClassName().lastIndexOf("."));
+			String className = smac.getClassName().substring(smac.getClassName().lastIndexOf(".") + 1);
+			String halfSignature = am.getSubSignature().substring(am.getSubSignature().indexOf(" ") + 1);
+			
+			// Generate the category if it does not already exist
+			if (am.getCategory() != null && !categoryMap.containsKey(am.getCategory())) {
+				Category riflCat = doc.new Category(am.getCategory().toString());
+				categoryMap.put(am.getCategory(), riflCat);
+				
+				// Add the domain to the model
+				doc.getDomains().add(riflCat);
+				
+				// Place the new category in the hierarchy
+				doc.getDomainHierarchy().add(doc.new DomPair(doc.getTopDomain(), riflCat));
+				doc.getDomainHierarchy().add(doc.new DomPair(riflCat, doc.getBottomDomain()));
+				
+				// Add the flow policy
+				doc.getFlowPolicy().add(doc.new FlowPair(riflCat, doc.getTopDomain()));
+				doc.getFlowPolicy().add(doc.new FlowPair(riflCat, riflCat));
+				if (am.getCategory() == CATEGORY.NO_CATEGORY)
+					doc.getFlowPolicy().add(doc.new FlowPair(riflCat, doc.getBottomDomain()));
+				doc.getFlowPolicy().add(doc.new FlowPair(doc.getBottomDomain(), riflCat));
+			}
 
+			// Add the source/sink specification
+			if (am.getCategory() != null) {
+				if (am.isSource()) {
+					// Taint the return value
+					SourceSinkSpec sourceSinkSpec = doc.new JavaParameterSpec(packageName, className,
+							halfSignature, 0);
+
+					doc.getAttackerIO().getSources().add(sourceSinkSpec);
+					doc.getDomainAssignment().add(doc.new SourceSinkDomPair
+							(sourceSinkSpec, categoryMap.get(am.getCategory()), DomPairType.SourceDomPair));
+				}
+				else if (am.isSink()) {
+					// Annotate all parameters
+					for (int i = 0; i < am.getParameters().size(); i++) {
+						SourceSinkSpec sourceSinkSpec = doc.new JavaParameterSpec(packageName, className,
+								halfSignature, i + 1);
+	
+						doc.getAttackerIO().getSinks().add(sourceSinkSpec);
+						doc.getDomainAssignment().add(doc.new SourceSinkDomPair
+								(sourceSinkSpec, categoryMap.get(am.getCategory()), DomPairType.SinkDomPair));
+					}
+				}
+	//			else
+	//				throw new RuntimeException("Method not annotated");
+			}
+		}
+		
+		RIFLWriter writer = new RIFLWriter(doc);
+		String fileName = appendFileName(targetFileName, "_rifl");
+		PrintWriter wr = new PrintWriter(fileName);
+		wr.print(writer.write());
+		wr.flush();
+		wr.close();
+	}
+	
 	private Set<AndroidMethod> loadMethodsFromFile(String[] sourceFileName)
 			throws IOException {
 		// Read in the source file
@@ -481,6 +420,7 @@ public class SourceSinkFinder {
 		}
 		System.out.println("Running with " + featuresSourceSink.size() + " features on "
 				+ methods.size() + " methods");
+		
 		return methods;
 	}
 
@@ -961,72 +901,6 @@ public class SourceSinkFinder {
 		throw new RuntimeException("Unknown source file format");
 	}
 	
-	private void analyseFeatureSpreading(Set<IFeature> features, Set<AndroidMethod> methods,  List<AndroidMethod> sources, List<AndroidMethod> sinks, List<AndroidMethod> neitherNor){
-		Map<IFeature, Set<AndroidMethod>> featureMethodMap = new HashMap<IFeature, Set<AndroidMethod>>();
-		
-		for(AndroidMethod method : methods){
-			for(IFeature feature : features){
-				if(feature.applies(method) == Type.TRUE){
-					if(featureMethodMap.containsKey(feature)){
-						Set<AndroidMethod> methodList = featureMethodMap.get(feature);
-						methodList.add(method);
-					}
-					else{
-						Set<AndroidMethod> newMethodList = new HashSet<AndroidMethod>();
-						newMethodList.add(method);
-						featureMethodMap.put(feature, newMethodList);
-					}
-				}
-			}
-		}
-		
-		for(IFeature feature : features)
-			if(!featureMethodMap.keySet().contains(feature))
-				featureMethodMap.put(feature, null);
-		
-		//############## Print feature spreading: ##############
-		System.out.println("############## Print feature spreading: ##############");
-		for(Map.Entry<IFeature, Set<AndroidMethod>> entry : featureMethodMap.entrySet()){
-			if(entry.getValue() != null)
-				System.out.println(entry.getKey() + "\t" + entry.getValue().size());
-			else
-				System.out.println(entry.getKey() + "\t0");
-		}
-		System.out.println("######################################################");
-		
-		//############## Print feature spreading based on trainings-set: ##############
-		System.out.println("############## Print feature spreading based on trainings-set: ##############");
-		System.out.println("Feature:\tSources \\%\tSinks: \\%\tNeitherNor:");
-		for(Map.Entry<IFeature, Set<AndroidMethod>> entry : featureMethodMap.entrySet()){
-			if(entry.getValue() != null){
-				int sourcesCounter = 0, sinkCounter = 0, neitherNorCounter = 0;
-				for(AndroidMethod method : entry.getValue()){
-					//sources
-					if(sources.contains(method))
-						sourcesCounter++;
-					//sinks
-					else if(sinks.contains(method))
-						sinkCounter++;
-					//neither nor
-					else if(neitherNor.contains(method))
-						neitherNorCounter++;
-				}
-				
-				System.out.print(entry.getKey());
-				System.out.print("\t" + sourcesCounter*100/sources.size());
-				System.out.print("\t" + sinkCounter*100/sinks.size());
-				System.out.print("\t" + neitherNorCounter*100/neitherNor.size() + "\n");
-			}
-			else{
-				System.out.print(entry.getKey());
-				System.out.print("\t-\t-\t-\n");
-			}
-		}
-		System.out.println("######################################################");
-		
-		
-	}
-
 	/**
 	 * Initializes the set of features for classifying methods as sources,
 	 * sinks or neither-nor entries.
