@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SuSi
+Bundle-SymbolicName: SuSi
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: org.junit
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Main-Class: de.ecspride.sourcesinkfinder.SourceSinkFinder

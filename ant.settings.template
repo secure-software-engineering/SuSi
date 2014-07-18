@@ -1,0 +1,7 @@
+soot.jar=
+soot-infoflow.jar=
+soot-infoflow-android.jar=
+
+weka.jar=lib/weka.jar
+
+SuSi.jar=build/jar/SuSi.jar

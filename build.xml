@@ -1,0 +1,38 @@
+<project default="compile" name="SuSi">
+	  <property file="ant.settings"/>
+	    <target name="settings">
+	        <fail
+	            message="Please copy ant.settings.template to ant.settings, and set the variables in it."
+	        	 unless="weka.jar"
+	        />
+	    </target>
+	
+	
+	<target name="clean">
+		<delete quiet="true" dir="build" />
+	</target>
+
+
+	<target name="compile" depends="settings">
+		<mkdir dir="build/classes" />
+		<javac includeantruntime="true" source="1.7" target="1.7" destdir="build/classes" debug="true"  encoding="iso-8859-1">
+		    <src path="src" />
+		    
+			<classpath>
+				<pathelement location="${weka.jar}" />
+				<pathelement location="${soot.jar}" />
+				<pathelement location="${soot-infoflow.jar}" />
+				<pathelement location="${soot-infoflow-android.jar}" />
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name="jar" depends="settings,compile">
+
+	    	<jar destfile="${SuSi.jar}" manifest="META-INF/MANIFEST.MF">
+	            <fileset dir="build/classes"/>
+	        </jar>
+
+	</target>
+
+</project>
