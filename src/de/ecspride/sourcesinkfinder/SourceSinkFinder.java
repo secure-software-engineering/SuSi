@@ -393,7 +393,7 @@ public class SourceSinkFinder {
 							// Merge the classification
 							if (am.isSource())
 								amOrig.setSource(true);
-							if (am.isSource())
+							if (am.isSink())
 								amOrig.setSink(true);
 							if (am.isNeitherNor())
 								amOrig.setNeitherNor(true);
@@ -763,7 +763,7 @@ public class SourceSinkFinder {
 	private void createSubclassAnnotations(final Set<AndroidMethod> methods) {
 		int copyCount = -1;
 		int totalCopyCount = 0;
-		while (copyCount != 0)
+		while (copyCount != 0) {
 			copyCount = 0;
 			for (AndroidMethod am : methods) {
 				// Check whether one of the parent classes is already annotated
@@ -837,6 +837,7 @@ public class SourceSinkFinder {
 					totalCopyCount++;
 				}
 			}
+		}
 		System.out.println("Created automatic annotations starting from "
 				+ totalCopyCount + " methods");
 	}
