@@ -23,9 +23,10 @@ import soot.jimple.infoflow.android.data.AndroidMethod;
 import soot.jimple.infoflow.android.data.AndroidMethod.CATEGORY;
 import soot.jimple.infoflow.android.data.AndroidMethodCategoryComparator;
 import soot.jimple.infoflow.android.data.parsers.CSVPermissionMethodParser;
-import soot.jimple.infoflow.android.data.parsers.IPermissionMethodParser;
 import soot.jimple.infoflow.android.data.parsers.PScoutPermissionMethodParser;
 import soot.jimple.infoflow.android.data.parsers.PermissionMethodParser;
+import soot.jimple.infoflow.android.source.data.ISourceSinkDefinitionProvider;
+import soot.jimple.infoflow.android.source.data.SourceSinkDefinition;
 import soot.jimple.infoflow.data.SootMethodAndClass;
 import soot.jimple.infoflow.rifl.RIFLDocument;
 import soot.jimple.infoflow.rifl.RIFLDocument.Category;
@@ -382,10 +383,11 @@ public class SourceSinkFinder {
 		// Read in the source file
 		Set<AndroidMethod> methods = new HashSet<AndroidMethod>();
 		for (String fileName : sourceFileName) {
-			IPermissionMethodParser pmp = createParser(fileName);
-			Set<AndroidMethod> meths = pmp.parse();
+			ISourceSinkDefinitionProvider pmp = createParser(fileName);
+			Set<SourceSinkDefinition> methDefs = pmp.getAllMethods();
 			
-			for (AndroidMethod am : meths) {
+			for (SourceSinkDefinition ssd : methDefs) {
+				AndroidMethod am = (AndroidMethod) ssd.getMethod();
 				if (methods.contains(am)) {
 					// Merge the methods
 					for (AndroidMethod amOrig : methods)
@@ -891,7 +893,7 @@ public class SourceSinkFinder {
 				+ targetFileName.substring(pos);
 	}
 
-	private IPermissionMethodParser createParser(String fileName) throws IOException {
+	private ISourceSinkDefinitionProvider createParser(String fileName) throws IOException {
 		String fileExt = fileName.substring(fileName.lastIndexOf("."));
 		if (fileExt.equalsIgnoreCase(".txt"))
 			return PermissionMethodParser.fromFile(fileName);
