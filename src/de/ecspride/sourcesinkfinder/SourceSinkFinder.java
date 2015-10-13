@@ -29,9 +29,11 @@ import soot.jimple.infoflow.android.source.data.ISourceSinkDefinitionProvider;
 import soot.jimple.infoflow.android.source.data.SourceSinkDefinition;
 import soot.jimple.infoflow.data.SootMethodAndClass;
 import soot.jimple.infoflow.rifl.RIFLDocument;
+import soot.jimple.infoflow.rifl.RIFLDocument.Assignable;
 import soot.jimple.infoflow.rifl.RIFLDocument.Category;
-import soot.jimple.infoflow.rifl.RIFLDocument.DomPairType;
+import soot.jimple.infoflow.rifl.RIFLDocument.DomainSpec;
 import soot.jimple.infoflow.rifl.RIFLDocument.SourceSinkSpec;
+import soot.jimple.infoflow.rifl.RIFLDocument.SourceSinkType;
 import soot.jimple.infoflow.rifl.RIFLWriter;
 import soot.jimple.infoflow.util.SootMethodRepresentationParser;
 import weka.classifiers.Classifier;
@@ -265,6 +267,8 @@ public class SourceSinkFinder {
 					if (am.isSource()){
 						if(currentCat == null || currentCat != am.getCategory()){
 							currentCat = am.getCategory();
+							if (currentCat == null)
+								throw new RuntimeException("NULL category detected");
 							wr.write("\n" + currentCat.toString() + ":\n");
 						}
 						
@@ -309,64 +313,75 @@ public class SourceSinkFinder {
 			Set<AndroidMethod> methods) throws IOException {
 		RIFLDocument doc = new RIFLDocument();
 		
-		doc.getFlowPolicy().add(doc.new FlowPair(doc.getTopDomain(), doc.getTopDomain()));
-		doc.getFlowPolicy().add(doc.new FlowPair(doc.getBottomDomain(), doc.getBottomDomain()));
-		doc.getFlowPolicy().add(doc.new FlowPair(doc.getBottomDomain(), doc.getTopDomain()));
+		DomainSpec topDomain = doc.new DomainSpec("top");
+		DomainSpec bottomDomain = doc.new DomainSpec("bottom");
+		
+		doc.getDomains().add(topDomain);
+		doc.getDomains().add(bottomDomain);
+		
+		doc.getFlowPolicy().add(doc.new FlowPair(topDomain, topDomain));
+		doc.getFlowPolicy().add(doc.new FlowPair(bottomDomain, bottomDomain));
+		doc.getFlowPolicy().add(doc.new FlowPair(bottomDomain, topDomain));
 		
 		Map<CATEGORY, Category> categoryMap = new HashMap<CATEGORY, Category>();
+		Map<CATEGORY, Assignable> assignableMap = new HashMap<CATEGORY, Assignable>();
 		
 		for (AndroidMethod am : methods) {
 			// Parse the class and package names
 			SootMethodAndClass smac = SootMethodRepresentationParser.v().parseSootMethodString
 					(am.getSignature());
-			String packageName = smac.getClassName().substring(0, smac.getClassName().lastIndexOf("."));
-			String className = smac.getClassName().substring(smac.getClassName().lastIndexOf(".") + 1);
 			String halfSignature = am.getSubSignature().substring(am.getSubSignature().indexOf(" ") + 1);
 			
 			// Generate the category if it does not already exist
-			if (am.getCategory() != null && !categoryMap.containsKey(am.getCategory())) {
-				Category riflCat = doc.new Category(am.getCategory().toString());
-				categoryMap.put(am.getCategory(), riflCat);
-				
-				// Add the domain to the model
-				doc.getDomains().add(riflCat);
-				
-				// Place the new category in the hierarchy
-				doc.getDomainHierarchy().add(doc.new DomPair(doc.getTopDomain(), riflCat));
-				doc.getDomainHierarchy().add(doc.new DomPair(riflCat, doc.getBottomDomain()));
-				
-				// Add the flow policy
-				doc.getFlowPolicy().add(doc.new FlowPair(riflCat, doc.getTopDomain()));
-				doc.getFlowPolicy().add(doc.new FlowPair(riflCat, riflCat));
-				if (am.getCategory() == CATEGORY.NO_CATEGORY)
-					doc.getFlowPolicy().add(doc.new FlowPair(riflCat, doc.getBottomDomain()));
-				doc.getFlowPolicy().add(doc.new FlowPair(doc.getBottomDomain(), riflCat));
+			if (am.getCategory() != null
+					&& !categoryMap.containsKey(am.getCategory())) {
+				if (am.isSource()) {
+					Category riflCat = doc.new Category(am.getCategory().toString() + "_src");
+					categoryMap.put(am.getCategory(), riflCat);
+					
+					Assignable riflAssignable = doc.new Assignable(
+							am.getCategory().toString() + "_src", riflCat);
+					assignableMap.put(am.getCategory(), riflAssignable);
+					
+					// Add the domain to the model
+					doc.getInterfaceSpec().getSourcesSinks().add(riflAssignable);
+					
+					// Place the new category in the hierarchy
+					doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, topDomain));
+				}
+				else if (am.isSink()) {
+					Category riflCat = doc.new Category(am.getCategory().toString() + "_snk");
+					categoryMap.put(am.getCategory(), riflCat);
+					
+					Assignable riflAssignable = doc.new Assignable(
+							am.getCategory().toString() + "_snk", riflCat);
+					assignableMap.put(am.getCategory(), riflAssignable);
+					
+					// Add the domain to the model
+					doc.getInterfaceSpec().getSourcesSinks().add(riflAssignable);
+					
+					// Place the new category in the hierarchy
+					doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, bottomDomain));					
+				}
 			}
 
 			// Add the source/sink specification
 			if (am.getCategory() != null) {
+				Category riflCat = categoryMap.get(am.getCategory().toString() + (am.isSource() ? "_src" : "_snk"));
 				if (am.isSource()) {
 					// Taint the return value
-					SourceSinkSpec sourceSinkSpec = doc.new JavaParameterSpec(packageName, className,
-							halfSignature, 0);
-
-					doc.getAttackerIO().getSources().add(sourceSinkSpec);
-					doc.getDomainAssignment().add(doc.new SourceSinkDomPair
-							(sourceSinkSpec, categoryMap.get(am.getCategory()), DomPairType.SourceDomPair));
+					SourceSinkSpec sourceSinkSpec = doc.new JavaReturnValueSpec(SourceSinkType.Source,
+							smac.getClassName(), halfSignature);
+					riflCat.getElements().add(sourceSinkSpec);
 				}
 				else if (am.isSink()) {
 					// Annotate all parameters
 					for (int i = 0; i < am.getParameters().size(); i++) {
-						SourceSinkSpec sourceSinkSpec = doc.new JavaParameterSpec(packageName, className,
-								halfSignature, i + 1);
-	
-						doc.getAttackerIO().getSinks().add(sourceSinkSpec);
-						doc.getDomainAssignment().add(doc.new SourceSinkDomPair
-								(sourceSinkSpec, categoryMap.get(am.getCategory()), DomPairType.SinkDomPair));
+						SourceSinkSpec sourceSinkSpec = doc.new JavaParameterSpec(SourceSinkType.Sink,
+								smac.getClassName(), halfSignature, i + 1);
+						riflCat.getElements().add(sourceSinkSpec);
 					}
 				}
-	//			else
-	//				throw new RuntimeException("Method not annotated");
 			}
 		}
 		
