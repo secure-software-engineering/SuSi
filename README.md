@@ -22,5 +22,5 @@ either use it as-is to reproduce the results from our paper, or extend it to mee
 Finally, start the machine learner:
 
 ```
-java -cp soot-trunk.jar:soot-infoflow.jar:soot-infoflow-android.jar:SuSi.jar de.ecspride.sourcesinkfinder.SourceSinkFinder android.jar permissionMethodWithLabel.pscout out.pscout 
+java -cp lib/weka.jar:soot-trunk.jar:soot-infoflow.jar:soot-infoflow-android.jar:SuSi.jar de.ecspride.sourcesinkfinder.SourceSinkFinder android.jar permissionMethodWithLabel.pscout out.pscout 
 ```
