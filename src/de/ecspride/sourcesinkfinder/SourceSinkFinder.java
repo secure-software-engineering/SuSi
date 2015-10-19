@@ -323,7 +323,7 @@ public class SourceSinkFinder {
 		doc.getFlowPolicy().add(doc.new FlowPair(bottomDomain, bottomDomain));
 		doc.getFlowPolicy().add(doc.new FlowPair(bottomDomain, topDomain));
 		
-		Map<CATEGORY, Category> categoryMap = new HashMap<CATEGORY, Category>();
+		Map<String, Category> categoryMap = new HashMap<String, Category>();
 		Map<CATEGORY, Assignable> assignableMap = new HashMap<CATEGORY, Assignable>();
 		
 		for (AndroidMethod am : methods) {
@@ -336,11 +336,11 @@ public class SourceSinkFinder {
 			if (am.getCategory() != null
 					&& !categoryMap.containsKey(am.getCategory())) {
 				if (am.isSource()) {
-					Category riflCat = doc.new Category(am.getCategory().toString() + "_src");
-					categoryMap.put(am.getCategory(), riflCat);
+					String catName = am.getCategory().toString() + "_src";
+					Category riflCat = doc.new Category(catName);
+					categoryMap.put(catName, riflCat);
 					
-					Assignable riflAssignable = doc.new Assignable(
-							am.getCategory().toString() + "_src", riflCat);
+					Assignable riflAssignable = doc.new Assignable(catName, riflCat);
 					assignableMap.put(am.getCategory(), riflAssignable);
 					
 					// Add the domain to the model
@@ -350,11 +350,11 @@ public class SourceSinkFinder {
 					doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, topDomain));
 				}
 				else if (am.isSink()) {
-					Category riflCat = doc.new Category(am.getCategory().toString() + "_snk");
-					categoryMap.put(am.getCategory(), riflCat);
+					String catName = am.getCategory().toString() + "_snk";
+					Category riflCat = doc.new Category(catName);
+					categoryMap.put(catName, riflCat);
 					
-					Assignable riflAssignable = doc.new Assignable(
-							am.getCategory().toString() + "_snk", riflCat);
+					Assignable riflAssignable = doc.new Assignable(catName, riflCat);
 					assignableMap.put(am.getCategory(), riflAssignable);
 					
 					// Add the domain to the model
@@ -367,8 +367,11 @@ public class SourceSinkFinder {
 
 			// Add the source/sink specification
 			if (am.getCategory() != null && (am.isSource() || am.isSink())) {
-				Category riflCat = categoryMap.get(am.getCategory().toString()
-						+ (am.isSource() ? "_src" : "_snk"));
+				String catName = am.getCategory().toString() + (am.isSource() ? "_src" : "_snk");
+				Category riflCat = categoryMap.get(catName);
+				if (riflCat == null)
+					throw new RuntimeException("Could not get category " + catName);
+				
 				if (am.isSource()) {
 					// Taint the return value
 					SourceSinkSpec sourceSinkSpec = doc.new JavaReturnValueSpec(SourceSinkType.Source,
