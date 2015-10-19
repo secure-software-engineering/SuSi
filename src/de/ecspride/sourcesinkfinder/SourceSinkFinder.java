@@ -366,8 +366,9 @@ public class SourceSinkFinder {
 			}
 
 			// Add the source/sink specification
-			if (am.getCategory() != null) {
-				Category riflCat = categoryMap.get(am.getCategory().toString() + (am.isSource() ? "_src" : "_snk"));
+			if (am.getCategory() != null && (am.isSource() || am.isSink())) {
+				Category riflCat = categoryMap.get(am.getCategory().toString()
+						+ (am.isSource() ? "_src" : "_snk"));
 				if (am.isSource()) {
 					// Taint the return value
 					SourceSinkSpec sourceSinkSpec = doc.new JavaReturnValueSpec(SourceSinkType.Source,
