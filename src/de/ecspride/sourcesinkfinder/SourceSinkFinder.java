@@ -333,35 +333,38 @@ public class SourceSinkFinder {
 			String halfSignature = am.getSubSignature().substring(am.getSubSignature().indexOf(" ") + 1);
 			
 			// Generate the category if it does not already exist
-			if (am.getCategory() != null
-					&& !categoryMap.containsKey(am.getCategory())) {
+			if (am.getCategory() != null) {
 				if (am.isSource()) {
 					String catName = am.getCategory().toString() + "_src";
-					Category riflCat = doc.new Category(catName);
-					categoryMap.put(catName, riflCat);
-					
-					Assignable riflAssignable = doc.new Assignable(catName, riflCat);
-					assignableMap.put(am.getCategory(), riflAssignable);
-					
-					// Add the domain to the model
-					doc.getInterfaceSpec().getSourcesSinks().add(riflAssignable);
-					
-					// Place the new category in the hierarchy
-					doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, topDomain));
+					if (!categoryMap.containsKey(catName)) {
+						Category riflCat = doc.new Category(catName);
+						categoryMap.put(catName, riflCat);
+						
+						Assignable riflAssignable = doc.new Assignable(catName, riflCat);
+						assignableMap.put(am.getCategory(), riflAssignable);
+						
+						// Add the domain to the model
+						doc.getInterfaceSpec().getSourcesSinks().add(riflAssignable);
+						
+						// Place the new category in the hierarchy
+						doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, topDomain));
+					}
 				}
 				else if (am.isSink()) {
 					String catName = am.getCategory().toString() + "_snk";
-					Category riflCat = doc.new Category(catName);
-					categoryMap.put(catName, riflCat);
-					
-					Assignable riflAssignable = doc.new Assignable(catName, riflCat);
-					assignableMap.put(am.getCategory(), riflAssignable);
-					
-					// Add the domain to the model
-					doc.getInterfaceSpec().getSourcesSinks().add(riflAssignable);
-					
-					// Place the new category in the hierarchy
-					doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, bottomDomain));					
+					if (!categoryMap.containsKey(catName)) {
+						Category riflCat = doc.new Category(catName);
+						categoryMap.put(catName, riflCat);
+						
+						Assignable riflAssignable = doc.new Assignable(catName, riflCat);
+						assignableMap.put(am.getCategory(), riflAssignable);
+						
+						// Add the domain to the model
+						doc.getInterfaceSpec().getSourcesSinks().add(riflAssignable);
+						
+						// Place the new category in the hierarchy
+						doc.getDomainAssignment().add(doc.new DomainAssignment(riflAssignable, bottomDomain));
+					}
 				}
 			}
 
