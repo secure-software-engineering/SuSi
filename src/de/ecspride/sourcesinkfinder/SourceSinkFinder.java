@@ -162,6 +162,7 @@ public class SourceSinkFinder {
 		}
 		
 		printStatistics(methods);
+		sanityCheck(methods);
 		
 		// Classify the methods into sources, sinks and neither-nor entries
 		startSourceSinkAnalysisTime = System.currentTimeMillis();
@@ -186,6 +187,21 @@ public class SourceSinkFinder {
 		writeRIFLSpecification(outputFile, methods);
 	}
 	
+	/**
+	 * Checks whether there are semantic errors in the given set of Android
+	 * methods
+	 * @param methods The set of method definitions to check
+	 */
+	private void sanityCheck(Set<AndroidMethod> methods) {
+		for (AndroidMethod m1 : methods) {
+			for (AndroidMethod m2 : methods) {
+				if (!m1.equals(m2) && m1.getSignature().equals(m2.getSignature()))
+					throw new RuntimeException("Multiple definitions for method "
+							+ m1.getSignature() + " with conflicting properties");
+			}
+		}
+	}
+
 	private void printStatistics(Set<AndroidMethod> methods) {
 		int sources = 0;
 		int sinks = 0;
