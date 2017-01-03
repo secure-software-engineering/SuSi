@@ -16,6 +16,33 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import de.ecspride.sourcesinkfinder.IFeature.Type;
+import de.ecspride.sourcesinkfinder.features.AbstractSootFeature;
+import de.ecspride.sourcesinkfinder.features.BaseNameOfClassPackageName;
+import de.ecspride.sourcesinkfinder.features.IsThreadRunFeature;
+import de.ecspride.sourcesinkfinder.features.MethodAnonymousClassFeature;
+import de.ecspride.sourcesinkfinder.features.MethodBodyContainsObjectFeature;
+import de.ecspride.sourcesinkfinder.features.MethodCallsMethodFeature;
+import de.ecspride.sourcesinkfinder.features.MethodClassConcreteNameFeature;
+import de.ecspride.sourcesinkfinder.features.MethodClassContainsNameFeature;
+import de.ecspride.sourcesinkfinder.features.MethodClassEndsWithNameFeature;
+import de.ecspride.sourcesinkfinder.features.MethodClassModifierFeature;
+import de.ecspride.sourcesinkfinder.features.MethodClassModifierFeature.ClassModifier;
+import de.ecspride.sourcesinkfinder.features.MethodHasParametersFeature;
+import de.ecspride.sourcesinkfinder.features.MethodIsRealSetterFeature;
+import de.ecspride.sourcesinkfinder.features.MethodModifierFeature;
+import de.ecspride.sourcesinkfinder.features.MethodModifierFeature.Modifier;
+import de.ecspride.sourcesinkfinder.features.MethodNameContainsFeature;
+import de.ecspride.sourcesinkfinder.features.MethodNameEndsWithFeature;
+import de.ecspride.sourcesinkfinder.features.MethodNameStartsWithFeature;
+import de.ecspride.sourcesinkfinder.features.MethodReturnsConstantFeature;
+import de.ecspride.sourcesinkfinder.features.ParameterContainsTypeOrNameFeature;
+import de.ecspride.sourcesinkfinder.features.ParameterInCallFeature;
+import de.ecspride.sourcesinkfinder.features.ParameterInCallFeature.CheckType;
+import de.ecspride.sourcesinkfinder.features.ParameterIsInterfaceFeature;
+import de.ecspride.sourcesinkfinder.features.PermissionNameFeature;
+import de.ecspride.sourcesinkfinder.features.ReturnTypeFeature;
+import de.ecspride.sourcesinkfinder.features.VoidOnMethodFeature;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
@@ -49,33 +76,6 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Range;
 import weka.core.converters.ArffSaver;
-import de.ecspride.sourcesinkfinder.IFeature.Type;
-import de.ecspride.sourcesinkfinder.features.AbstractSootFeature;
-import de.ecspride.sourcesinkfinder.features.BaseNameOfClassPackageName;
-import de.ecspride.sourcesinkfinder.features.IsThreadRunFeature;
-import de.ecspride.sourcesinkfinder.features.MethodAnonymousClassFeature;
-import de.ecspride.sourcesinkfinder.features.MethodBodyContainsObjectFeature;
-import de.ecspride.sourcesinkfinder.features.MethodCallsMethodFeature;
-import de.ecspride.sourcesinkfinder.features.MethodClassConcreteNameFeature;
-import de.ecspride.sourcesinkfinder.features.MethodClassContainsNameFeature;
-import de.ecspride.sourcesinkfinder.features.MethodClassEndsWithNameFeature;
-import de.ecspride.sourcesinkfinder.features.MethodClassModifierFeature;
-import de.ecspride.sourcesinkfinder.features.MethodClassModifierFeature.ClassModifier;
-import de.ecspride.sourcesinkfinder.features.MethodHasParametersFeature;
-import de.ecspride.sourcesinkfinder.features.MethodIsRealSetterFeature;
-import de.ecspride.sourcesinkfinder.features.MethodModifierFeature;
-import de.ecspride.sourcesinkfinder.features.MethodModifierFeature.Modifier;
-import de.ecspride.sourcesinkfinder.features.MethodNameContainsFeature;
-import de.ecspride.sourcesinkfinder.features.MethodNameEndsWithFeature;
-import de.ecspride.sourcesinkfinder.features.MethodNameStartsWithFeature;
-import de.ecspride.sourcesinkfinder.features.MethodReturnsConstantFeature;
-import de.ecspride.sourcesinkfinder.features.ParameterContainsTypeOrNameFeature;
-import de.ecspride.sourcesinkfinder.features.ParameterInCallFeature;
-import de.ecspride.sourcesinkfinder.features.ParameterInCallFeature.CheckType;
-import de.ecspride.sourcesinkfinder.features.ParameterIsInterfaceFeature;
-import de.ecspride.sourcesinkfinder.features.PermissionNameFeature;
-import de.ecspride.sourcesinkfinder.features.ReturnTypeFeature;
-import de.ecspride.sourcesinkfinder.features.VoidOnMethodFeature;
 
 /**
  * Finds possible sources and sinks in a given set of Android system methods using
@@ -162,7 +162,7 @@ public class SourceSinkFinder {
 		}
 		
 		printStatistics(methods);
-		sanityCheck(methods);
+		methods = sanityCheck(methods);
 		
 		// Classify the methods into sources, sinks and neither-nor entries
 		startSourceSinkAnalysisTime = System.currentTimeMillis();
@@ -189,17 +189,44 @@ public class SourceSinkFinder {
 	
 	/**
 	 * Checks whether there are semantic errors in the given set of Android
-	 * methods
+	 * methods and tries to filter out duplicates by merging.
 	 * @param methods The set of method definitions to check
+	 * @return The purged set of Android methods without duplicates
 	 */
-	private void sanityCheck(Set<AndroidMethod> methods) {
+	private Set<AndroidMethod> sanityCheck(Set<AndroidMethod> methods) {
+		Map<String, AndroidMethod> signatureToMethod = new HashMap<>(methods.size());
+		
 		for (AndroidMethod m1 : methods) {
-			for (AndroidMethod m2 : methods) {
-				if (!m1.equals(m2) && m1.getSignature().equals(m2.getSignature()))
-					throw new RuntimeException("Multiple definitions for method "
-							+ m1.getSignature() + " with conflicting properties");
+			String sig = m1.getSignature();
+			AndroidMethod m2 = signatureToMethod.get(sig);
+			if (m2 == null)
+				signatureToMethod.put(sig, m1);
+			else {
+				if (!m1.equals(m2)) {
+					// Merge the annotations
+					if (!m1.isAnnotated() && m2.isAnnotated()) {
+						m1.setSource(m2.isSource());
+						m1.setSink(m2.isSink());
+						m1.setNeitherNor(m2.isNeitherNor());
+						for (String permission : m2.getPermissions())
+							m1.addPermission(permission);
+					}
+					
+					// Merge the permissions
+					if (!m2.getPermissions().isEmpty()) {
+						for (String permission : m2.getPermissions())
+							m1.addPermission(permission);
+					}
+					
+					// Merge the categories
+					if (m1.getCategory() == null && m2.getCategory() != null)
+						m1.setCategory(m2.getCategory());
+				}
 			}
 		}
+
+		System.out.println("Merged " + (methods.size() - signatureToMethod.size()) + " entries");
+		return new HashSet<>(signatureToMethod.values());
 	}
 
 	private void printStatistics(Set<AndroidMethod> methods) {
