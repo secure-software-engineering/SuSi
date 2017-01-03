@@ -658,13 +658,17 @@ public class SourceSinkFinder {
 		FastVector classes = new FastVector();
 		for (AndroidMethod.CATEGORY cat : AndroidMethod.CATEGORY.values()) {
 			// Only add the class if it is actually used
-			for (AndroidMethod am : methods)
-				if (am.isSource() == sources
-						&& am.isSink() == sinks
-						&& am.getCategory() == cat) {
-					classes.addElement(cat.toString());
-					break;
-				}
+			if (cat == CATEGORY.NO_CATEGORY)
+				classes.addElement(cat.toString());
+			else {
+				for (AndroidMethod am : methods)
+					if (am.isSource() == sources
+							&& am.isSink() == sinks
+							&& am.getCategory() == cat) {
+						classes.addElement(cat.toString());
+						break;
+					}
+			}
 		}
 
 		// Collect all attributes and create the instance set
