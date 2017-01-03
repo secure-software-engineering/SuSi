@@ -204,23 +204,23 @@ public class SourceSinkFinder {
 			else {
 				if (!m1.equals(m2)) {
 					// Merge the annotations
-					if (!m1.isAnnotated() && m2.isAnnotated()) {
-						m1.setSource(m2.isSource());
-						m1.setSink(m2.isSink());
-						m1.setNeitherNor(m2.isNeitherNor());
-						for (String permission : m2.getPermissions())
-							m1.addPermission(permission);
+					if (!m2.isAnnotated() && m1.isAnnotated()) {
+						m2.setSource(m1.isSource());
+						m2.setSink(m1.isSink());
+						m2.setNeitherNor(m1.isNeitherNor());
+						for (String permission : m1.getPermissions())
+							m2.addPermission(permission);
 					}
 					
 					// Merge the permissions
-					if (!m2.getPermissions().isEmpty()) {
-						for (String permission : m2.getPermissions())
-							m1.addPermission(permission);
+					if (!m1.getPermissions().isEmpty()) {
+						for (String permission : m1.getPermissions())
+							m2.addPermission(permission);
 					}
 					
 					// Merge the categories
-					if (m1.getCategory() == null && m2.getCategory() != null)
-						m1.setCategory(m2.getCategory());
+					if (m2.getCategory() == null && m1.getCategory() != null)
+						m2.setCategory(m1.getCategory());
 				}
 			}
 		}
